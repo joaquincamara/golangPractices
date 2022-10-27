@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/joaquincamara/golangPractices/utils"
 )
 
 type Event struct {
@@ -14,7 +15,26 @@ type Event struct {
 	Description string
 }
 
+type Messages struct {
+	Exist             string
+	InvalidRequest    string
+	EditionSucces     string
+	DeleteSucces      string
+	CreationSucces    string
+	ElementsFound     string
+	SomethingGetWrong string
+}
+
 var DB = make(map[int32]Event)
+var messages = Messages{
+	Exist:             "Event already exist",
+	InvalidRequest:    "Invalid request",
+	EditionSucces:     "Edition succesful",
+	DeleteSucces:      "Deletion succesful",
+	CreationSucces:    "Creaction succesful",
+	ElementsFound:     "Elements Found",
+	SomethingGetWrong: "Something get wrong",
+}
 
 func main() {
 	router := mux.NewRouter()
@@ -29,104 +49,93 @@ func main() {
 }
 
 func Home(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Welcome to the ToDo app instructions")
-	fmt.Println("APIS:")
-	fmt.Println("This is the model for a event the app")
-	fmt.Println("Id: int32")
-	fmt.Println("Title: string")
-	fmt.Println("Description: string")
+	fmt.Println(`Welcome to the ToDo app instructions
+	This is the model for a event the app
 
-	fmt.Println("This is our endpoint and the methods that the url can manage")
-	fmt.Println("GET, POST, PUT, DELETE")
-	fmt.Println("/api/v1/events")
+	Id: int32
+	Title: string
+	Title: string
+	Description: string
+
+	This is our endpoint and the methods that the url can manage
+	GET, POST, PUT, DELETE
+	/api/v1/events
+	`)
 }
 
 func CreateEvent(w http.ResponseWriter, r *http.Request) {
-	message := make(map[string]string)
 	var event Event
 	decoder := json.NewDecoder(r.Body)
 
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := decoder.Decode(&event); err != nil {
-		message["error"] = "Invalid request"
-		response, _ := json.Marshal(message["error"])
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 	}
-	defer r.Body.Close()
+
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			utils.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
+		}
+	}()
 
 	if _, ok := DB[event.Id]; ok {
-		message["Exist"] = "Event already exist"
-		response, _ := json.Marshal(message)
-		w.WriteHeader(http.StatusFound)
-		w.Write(response)
-	} else {
-		DB[event.Id] = event
-		response, _ := json.Marshal(DB[event.Id])
-		w.WriteHeader(http.StatusCreated)
-		w.Write(response)
+		utils.WithErrorResponse(w, http.StatusFound, messages.Exist)
 	}
+
+	DB[event.Id] = event
+	utils.WithSuccesResponse(w, http.StatusCreated, messages.CreationSucces)
 
 }
 
 func EditEvent(w http.ResponseWriter, r *http.Request) {
-	message := make(map[string]string)
 	var event Event
 	decoder := json.NewDecoder(r.Body)
 
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := decoder.Decode(&event); err != nil {
-		message["error"] = "Invalid request"
-		response, _ := json.Marshal(message["error"])
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 	}
-	defer r.Body.Close()
+
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			utils.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
+		}
+	}()
 
 	if _, ok := DB[event.Id]; ok {
-		message["EditionSucces"] = "Edition succesful"
 		DB[event.Id] = event
-		response, _ := json.Marshal(message["EditionSucces"])
-		w.WriteHeader(http.StatusOK)
-		w.Write(response)
-	} else {
-		message["error"] = "Invalid request"
-		response, _ := json.Marshal(message["error"])
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		utils.WithSuccesResponse(w, http.StatusOK, messages.EditionSucces)
 	}
+
+	utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 
 }
 
 func DeleteEvent(w http.ResponseWriter, r *http.Request) {
-	message := make(map[string]string)
 	var event Event
 	decoder := json.NewDecoder(r.Body)
 
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := decoder.Decode(&event); err != nil {
-		message["error"] = "Invalid request"
-		response, _ := json.Marshal(message["error"])
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 	}
-	defer r.Body.Close()
+
+	defer func() {
+		if err := r.Body.Close(); err != nil {
+			utils.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
+		}
+	}()
 
 	if _, ok := DB[event.Id]; ok {
-		message["DeleteSucces"] = "Delete succesful"
+
 		delete(DB, event.Id)
-		response, _ := json.Marshal(message["DeleteSucces"])
-		w.WriteHeader(http.StatusOK)
-		w.Write(response)
-	} else {
-		message["error"] = "Invalid request"
-		response, _ := json.Marshal(message["error"])
-		w.WriteHeader(http.StatusBadRequest)
-		w.Write(response)
+		utils.WithSuccesResponse(w, http.StatusOK, messages.DeleteSucces)
 	}
+
+	utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 }
 
 func GetAllEvents(w http.ResponseWriter, r *http.Request) {
