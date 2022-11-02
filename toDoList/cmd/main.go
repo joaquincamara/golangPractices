@@ -6,27 +6,14 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/joaquincamara/golangPractices/utils"
+	"github.com/joaquincamara/golangPractices/pkg/api"
+	"github.com/joaquincamara/golangPractices/pkg/database"
+	"github.com/joaquincamara/golangPractices/pkg/event"
 )
 
-type Event struct {
-	Id          int32
-	Title       string
-	Description string
-}
+var DB database.DB
 
-type Messages struct {
-	Exist             string
-	InvalidRequest    string
-	EditionSucces     string
-	DeleteSucces      string
-	CreationSucces    string
-	ElementsFound     string
-	SomethingGetWrong string
-}
-
-var DB = make(map[int32]Event)
-var messages = Messages{
+var messages = api.Messages{
 	Exist:             "Event already exist",
 	InvalidRequest:    "Invalid request",
 	EditionSucces:     "Edition succesful",
@@ -37,6 +24,11 @@ var messages = Messages{
 }
 
 func main() {
+
+	eventRepo := database.NewEventRepository(DB)
+	eventCtr := event.NewEventController(eventRepo)
+	fmt.Println(eventCtr)
+
 	router := mux.NewRouter()
 	router.HandleFunc("/", Home)
 	router.HandleFunc("/api/v1/events", GetAllEvents).Methods("GET")
@@ -64,78 +56,75 @@ func Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateEvent(w http.ResponseWriter, r *http.Request) {
-	var event Event
+	var event event.Event
 	decoder := json.NewDecoder(r.Body)
 
-	w.Header().Set("Content-Type", "application/json")
-
 	if err := decoder.Decode(&event); err != nil {
-		utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
+		api.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
+		return
 	}
 
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			utils.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
+			api.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
+			return
 		}
 	}()
 
 	if _, ok := DB[event.Id]; ok {
-		utils.WithErrorResponse(w, http.StatusFound, messages.Exist)
+		api.WithErrorResponse(w, http.StatusFound, messages.Exist)
+		return
 	}
 
 	DB[event.Id] = event
-	utils.WithSuccesResponse(w, http.StatusCreated, messages.CreationSucces)
+	api.WithSuccesResponse(w, http.StatusCreated, messages.CreationSucces)
 
 }
 
 func EditEvent(w http.ResponseWriter, r *http.Request) {
-	var event Event
+	var event event.Event
 	decoder := json.NewDecoder(r.Body)
 
-	w.Header().Set("Content-Type", "application/json")
-
 	if err := decoder.Decode(&event); err != nil {
-		utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
+		api.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 	}
 
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			utils.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
+			api.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
 		}
 	}()
 
 	if _, ok := DB[event.Id]; ok {
 		DB[event.Id] = event
-		utils.WithSuccesResponse(w, http.StatusOK, messages.EditionSucces)
+		api.WithSuccesResponse(w, http.StatusOK, messages.EditionSucces)
 	}
 
-	utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
+	api.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 
 }
 
 func DeleteEvent(w http.ResponseWriter, r *http.Request) {
-	var event Event
+	var event event.Event
 	decoder := json.NewDecoder(r.Body)
 
-	w.Header().Set("Content-Type", "application/json")
-
 	if err := decoder.Decode(&event); err != nil {
-		utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
+		api.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 	}
 
 	defer func() {
 		if err := r.Body.Close(); err != nil {
-			utils.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
+			api.WithErrorResponse(w, http.StatusInternalServerError, messages.SomethingGetWrong)
 		}
 	}()
 
 	if _, ok := DB[event.Id]; ok {
 
 		delete(DB, event.Id)
-		utils.WithSuccesResponse(w, http.StatusOK, messages.DeleteSucces)
+		api.WithSuccesResponse(w, http.StatusOK, messages.DeleteSucces)
 	}
 
-	utils.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
+	api.WithErrorResponse(w, http.StatusBadRequest, messages.InvalidRequest)
 }
 
 func GetAllEvents(w http.ResponseWriter, r *http.Request) {
