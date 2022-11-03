@@ -3,22 +3,23 @@ package database
 import (
 	"errors"
 
-	"github.com/joaquincamara/golangPractices/pkg/event"
+	"github.com/joaquincamara/golangPractices/pkg/model"
+	"github.com/joaquincamara/golangPractices/pkg/repository"
 )
 
-type DB map[int32]event.Event
+type DB map[int32]model.Event
 
 type EventRespository struct {
-	Query event.IEventRepository
+	Query repository.IEventRepository
 	DB    DB
 }
 
-func NewEventRepository(db DB) event.IEventRepository {
+func NewEventRepository(db DB) repository.IEventRepository {
 	return &EventRespository{DB: db}
 }
 
 //EventRespository methods
-func (er *EventRespository) Insert(e event.Event) error {
+func (er *EventRespository) Insert(e model.Event) error {
 
 	if _, ok := er.DB[e.Id]; ok {
 		return errors.New("event already exists")
@@ -28,7 +29,7 @@ func (er *EventRespository) Insert(e event.Event) error {
 	return nil
 }
 
-func (er *EventRespository) Update(e event.Event) error {
+func (er *EventRespository) Update(e model.Event) error {
 
 	if _, ok := er.DB[e.Id]; !ok {
 		return errors.New("event not exist")
@@ -38,7 +39,7 @@ func (er *EventRespository) Update(e event.Event) error {
 	return nil
 }
 
-func (er *EventRespository) Delete(e event.Event) error {
+func (er *EventRespository) Delete(e model.Event) error {
 
 	if _, ok := er.DB[e.Id]; !ok {
 		return errors.New("event not exist")
@@ -46,6 +47,6 @@ func (er *EventRespository) Delete(e event.Event) error {
 	delete(er.DB, e.Id)
 	return nil
 }
-func (er *EventRespository) FindAll() (map[int32]event.Event, error) {
+func (er *EventRespository) FindAll() (map[int32]model.Event, error) {
 	return er.DB, nil
 }
