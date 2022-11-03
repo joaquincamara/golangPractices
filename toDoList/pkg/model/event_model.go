@@ -1,4 +1,4 @@
-package event
+package model
 
 type Event struct {
 	Id          int32

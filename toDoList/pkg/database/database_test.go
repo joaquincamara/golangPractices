@@ -4,14 +4,14 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/joaquincamara/golangPractices/pkg/event"
+	"github.com/joaquincamara/golangPractices/pkg/model"
 	"github.com/stretchr/testify/assert"
 )
 
 var mockDB = make(DB)
 
 func TestInsert(t *testing.T) {
-	mockEvent := event.Event{
+	mockEvent := model.Event{
 		Id:          2,
 		Title:       "Buy dog food",
 		Description: "Need to have a good flavor",
@@ -24,7 +24,7 @@ func TestInsert(t *testing.T) {
 
 func TestInsertExistingElement(t *testing.T) {
 	mockEventRepo := NewEventRepository(mockDB)
-	mockDB[1] = event.Event{
+	mockDB[1] = model.Event{
 		Id:          1,
 		Title:       "Pay electricity",
 		Description: "Need to be before weekend",
@@ -34,12 +34,12 @@ func TestInsertExistingElement(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	mockDB[1] = event.Event{
+	mockDB[1] = model.Event{
 		Id:          1,
 		Title:       "Buy dog food",
 		Description: "Need to have a good flavor",
 	}
-	mockEventEdtion := event.Event{
+	mockEventEdtion := model.Event{
 		Id:          1,
 		Title:       "Buy human food",
 		Description: "Need to have a good flavor",
@@ -50,7 +50,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestUpdateEventNotExist(t *testing.T) {
-	mockEventEdtion := event.Event{
+	mockEventEdtion := model.Event{
 		Id:          1,
 		Title:       "Buy human food",
 		Description: "Need to have a good flavor",
@@ -61,12 +61,12 @@ func TestUpdateEventNotExist(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	mockDB[1] = event.Event{
+	mockDB[1] = model.Event{
 		Id:          1,
 		Title:       "Buy human food",
 		Description: "Need to have a good flavor",
 	}
-	mockEventEdtion := event.Event{
+	mockEventEdtion := model.Event{
 		Id:          1,
 		Title:       "Buy human food",
 		Description: "Need to have a good flavor",
@@ -77,7 +77,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestDeleteEventNotExist(t *testing.T) {
-	mockEventEdtion := event.Event{
+	mockEventEdtion := model.Event{
 		Id:          1,
 		Title:       "Buy human food",
 		Description: "Need to have a good flavor",
